@@ -166,7 +166,7 @@ namespace AATS.API.Controllers
                     </body>
                     </html>";
 
-                await _emailService.SendEmailAsync("nexora280@gmail.com", "AATS - Password Reset Request", body);
+                await _emailService.SendEmailAsync("hazeerabm@gmail.com", "AATS - Password Reset Request", body);
 
                 return Ok(ApiResponse<object>.Ok(new { message = "Password reset request submitted successfully." }));
             }
@@ -218,7 +218,7 @@ namespace AATS.API.Controllers
                     </body>
                     </html>";
 
-                await _emailService.SendEmailAsync("nexora280@gmail.com", "AATS - Edit Authorization OTP", body);
+                await _emailService.SendEmailAsync("hazeerabm@gmail.com", "AATS - Edit Authorization OTP", body);
 
                 var admins = await _context.Users
                     .Where(u => u.Role == AATS.Domain.Entities.UserRole.Admin && u.IsActive)
@@ -226,7 +226,7 @@ namespace AATS.API.Controllers
 
                 foreach (var admin in admins)
                 {
-                    if (!string.Equals(admin.Email, "nexora280@gmail.com", StringComparison.OrdinalIgnoreCase))
+                    if (!string.Equals(admin.Email, "hazeerabm@gmail.com", StringComparison.OrdinalIgnoreCase))
                     {
                         await _emailService.SendEmailAsync(admin.Email, "AATS - Edit Authorization OTP", body);
                     }
