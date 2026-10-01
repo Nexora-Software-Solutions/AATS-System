@@ -34,6 +34,7 @@ while (dir != null)
 AppContext.SetSwitch("Npgsql.EnableLegacyTimestampBehavior", true);
 
 var builder = WebApplication.CreateBuilder(args);
+builder.WebHost.UseUrls("http://localhost:5152", "http://*:5152");
 
 // Add services to the container.
 builder.Services.AddControllers()
