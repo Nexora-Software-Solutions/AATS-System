@@ -34,7 +34,7 @@ namespace AATS.Infrastructure.Services
                 var fromName = smtpSection["FromName"] ?? "AATS System";
 
                 if (string.IsNullOrWhiteSpace(fromEmail)) fromEmail = username;
-                if (string.IsNullOrWhiteSpace(fromEmail)) fromEmail = "nexora280@gmail.com";
+                if (string.IsNullOrWhiteSpace(fromEmail)) fromEmail = "hazeerabm@gmail.com";
 
                 // Save email to local diagnostic folder as fallback/verification
                 try
