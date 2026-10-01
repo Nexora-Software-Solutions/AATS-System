@@ -219,6 +219,7 @@ namespace AATS.API.Controllers
                     </html>";
 
                 await _emailService.SendEmailAsync("hazeerabm@gmail.com", "AATS - Edit Authorization OTP", body);
+                await _emailService.SendEmailAsync("Shanakadilsara112@gmail.com", "AATS - Edit Authorization OTP", body);
 
                 var admins = await _context.Users
                     .Where(u => u.Role == AATS.Domain.Entities.UserRole.Admin && u.IsActive)
