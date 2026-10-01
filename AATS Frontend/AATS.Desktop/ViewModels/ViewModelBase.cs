@@ -69,9 +69,11 @@ namespace AATS.Desktop.ViewModels
 
         [ObservableProperty] private string _selectedClientId = string.Empty;
 
+        private bool _isLoadingClientDocuments = false;
+
         partial void OnSelectedClientChanged(ClientRecord? value)
         {
-            if (value != null)
+            if (value != null && !_isSelectingClient)
             {
                 _ = LoadClientDocumentsAndNotifyAsync(value);
             }
@@ -79,34 +81,44 @@ namespace AATS.Desktop.ViewModels
 
         private async System.Threading.Tasks.Task LoadClientDocumentsAndNotifyAsync(ClientRecord client)
         {
-            if (client != null && !string.IsNullOrEmpty(client.Id))
+            if (client == null || _isLoadingClientDocuments) return;
+            _isLoadingClientDocuments = true;
+
+            try
             {
-                try
+                if (!string.IsNullOrEmpty(client.Id))
                 {
-                    var freshClient = await DataService.Instance.GetClientByIdAsync(client.Id);
-                    if (freshClient != null)
+                    try
                     {
-                        client.BrAttachments = freshClient.BrAttachments;
-                        client.TinAttachments = freshClient.TinAttachments;
-                        client.Form01Attachments = freshClient.Form01Attachments;
-                        client.ArticleOfAssociationAttachments = freshClient.ArticleOfAssociationAttachments;
-                        client.NicAttachments = freshClient.NicAttachments;
-                        
-                        if (string.IsNullOrEmpty(client.Email)) client.Email = freshClient.Email;
-                        if (string.IsNullOrEmpty(client.Phone)) client.Phone = freshClient.Phone;
-                        if (string.IsNullOrEmpty(client.Name)) client.Name = freshClient.Name;
+                        var freshClient = await DataService.Instance.GetClientByIdAsync(client.Id);
+                        if (freshClient != null)
+                        {
+                            client.BrAttachments = freshClient.BrAttachments;
+                            client.TinAttachments = freshClient.TinAttachments;
+                            client.Form01Attachments = freshClient.Form01Attachments;
+                            client.ArticleOfAssociationAttachments = freshClient.ArticleOfAssociationAttachments;
+                            client.NicAttachments = freshClient.NicAttachments;
+                            
+                            if (string.IsNullOrEmpty(client.Email)) client.Email = freshClient.Email;
+                            if (string.IsNullOrEmpty(client.Phone)) client.Phone = freshClient.Phone;
+                            if (string.IsNullOrEmpty(client.Name)) client.Name = freshClient.Name;
+                        }
+                    }
+                    catch (Exception ex)
+                    {
+                        Console.WriteLine($"[DEBUG] Error fetching fresh client details: {ex.Message}");
                     }
                 }
-                catch (Exception ex)
-                {
-                    Console.WriteLine($"[DEBUG] Error fetching fresh client details: {ex.Message}");
-                }
-            }
 
-            await Avalonia.Threading.Dispatcher.UIThread.InvokeAsync(() =>
+                await Avalonia.Threading.Dispatcher.UIThread.InvokeAsync(() =>
+                {
+                    OnClientSelected(client);
+                });
+            }
+            finally
             {
-                OnClientSelected(client!);
-            });
+                _isLoadingClientDocuments = false;
+            }
         }
 
         protected virtual void OnClientSelected(ClientRecord client)
@@ -140,6 +152,8 @@ namespace AATS.Desktop.ViewModels
 
         protected void FilterClientCodes(string? text)
         {
+            if (_isSelectingClient) return;
+
             ClientCodeSuggestions.Clear();
             HighlightedSuggestionIndex = -1;
 
@@ -158,19 +172,21 @@ namespace AATS.Desktop.ViewModels
                 foreach (var client in filtered)
                     ClientCodeSuggestions.Add(client);
 
-                // Dynamically resolve SelectedClient on exact case-insensitive match
-                SelectedClient = _allClients.FirstOrDefault(c => string.Equals(c.ClientCode, text, StringComparison.OrdinalIgnoreCase));
+                var match = _allClients.FirstOrDefault(c => string.Equals(c.ClientCode, text, StringComparison.OrdinalIgnoreCase));
+                if (match != null && SelectedClient != match)
+                {
+                    SelectedClient = match;
+                }
             }
 
-            if (!_isSelectingClient)
-            {
-                bool isExactMatch = SelectedClient != null && string.Equals(SelectedClient.ClientCode, text, StringComparison.OrdinalIgnoreCase);
-                                IsClientCodeDropdownOpen = ClientCodeSuggestions.Count > 0 && !isExactMatch;
-            }
+            bool isExactMatch = SelectedClient != null && string.Equals(SelectedClient.ClientCode, text, StringComparison.OrdinalIgnoreCase);
+            IsClientCodeDropdownOpen = ClientCodeSuggestions.Count > 0 && !isExactMatch;
         }
 
         protected void FilterClientNames(string? text)
         {
+            if (_isSelectingClient) return;
+
             ClientNameSuggestions.Clear();
             HighlightedSuggestionIndex = -1;
 
@@ -189,14 +205,15 @@ namespace AATS.Desktop.ViewModels
                 foreach (var client in filtered)
                     ClientNameSuggestions.Add(client);
 
-                SelectedClient = _allClients.FirstOrDefault(c => string.Equals(c.Name, text, StringComparison.OrdinalIgnoreCase));
+                var match = _allClients.FirstOrDefault(c => string.Equals(c.Name, text, StringComparison.OrdinalIgnoreCase));
+                if (match != null && SelectedClient != match)
+                {
+                    SelectedClient = match;
+                }
             }
 
-            if (!_isSelectingClient)
-            {
-                bool isExactMatch = SelectedClient != null && string.Equals(SelectedClient.Name, text, StringComparison.OrdinalIgnoreCase);
-                IsClientNameDropdownOpen = ClientNameSuggestions.Count > 0 && !isExactMatch;
-            }
+            bool isExactMatch = SelectedClient != null && string.Equals(SelectedClient.Name, text, StringComparison.OrdinalIgnoreCase);
+            IsClientNameDropdownOpen = ClientNameSuggestions.Count > 0 && !isExactMatch;
         }
 
         protected void FilterBanks(string? text)
@@ -226,10 +243,16 @@ namespace AATS.Desktop.ViewModels
         {
             if (client == null) return;
             _isSelectingClient = true;
-            SelectedClient = client;
-            SelectedClientId = client.ClientCode ?? string.Empty;
-            IsClientCodeDropdownOpen = false;
-                        _isSelectingClient = false;
+            try
+            {
+                SelectedClient = client;
+                SelectedClientId = client.ClientCode ?? string.Empty;
+                IsClientCodeDropdownOpen = false;
+            }
+            finally
+            {
+                _isSelectingClient = false;
+            }
 
             _ = LoadClientDocumentsAndNotifyAsync(client);
         }
@@ -239,10 +262,16 @@ namespace AATS.Desktop.ViewModels
         {
             if (client == null) return;
             _isSelectingClient = true;
-            SelectedClient = client;
-            SelectedClientId = client.ClientCode ?? string.Empty;
-            IsClientNameDropdownOpen = false;
-            _isSelectingClient = false;
+            try
+            {
+                SelectedClient = client;
+                SelectedClientId = client.ClientCode ?? string.Empty;
+                IsClientNameDropdownOpen = false;
+            }
+            finally
+            {
+                _isSelectingClient = false;
+            }
 
             _ = LoadClientDocumentsAndNotifyAsync(client);
         }
