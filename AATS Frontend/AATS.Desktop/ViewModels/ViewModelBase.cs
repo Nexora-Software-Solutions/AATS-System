@@ -103,7 +103,10 @@ namespace AATS.Desktop.ViewModels
                 }
             }
 
-            OnClientSelected(client!);
+            await Avalonia.Threading.Dispatcher.UIThread.InvokeAsync(() =>
+            {
+                OnClientSelected(client!);
+            });
         }
 
         protected virtual void OnClientSelected(ClientRecord client)

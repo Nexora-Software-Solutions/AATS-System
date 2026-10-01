@@ -747,71 +747,82 @@ public partial class AddCompanyRegistrationViewModel : ViewModelBase
     protected override void OnClientSelected(ClientRecord client)
     {
         if (client == null) return;
-        ClientId = client.ClientCode ?? string.Empty;
-        ClientName = client.Name ?? string.Empty;
-        Email = client.Email ?? string.Empty;
-        PhoneNo = client.Phone ?? string.Empty;
-        if (Guid.TryParse(client.Id, out var guid)) _clientGuid = guid;
-        _branchGuid = client.BranchId;
-        _branchName = client.Branch;
 
-        // Auto-populate documents uploaded during Client Registration
-        if (client.Form01Attachments != null)
+        Avalonia.Threading.Dispatcher.UIThread.Post(() =>
         {
-            foreach (var doc in client.Form01Attachments)
+            try
             {
-                if (!Form01Attachments.Any(d => d.Url == doc.Url || d.FileName == doc.FileName))
+                ClientId = client.ClientCode ?? string.Empty;
+                ClientName = client.Name ?? string.Empty;
+                Email = client.Email ?? string.Empty;
+                PhoneNo = client.Phone ?? string.Empty;
+                if (Guid.TryParse(client.Id, out var guid)) _clientGuid = guid;
+                _branchGuid = client.BranchId;
+                _branchName = client.Branch;
+
+                // Auto-populate documents uploaded during Client Registration
+                if (client.Form01Attachments != null)
                 {
-                    Form01Attachments.Add(new SourceDocument
+                    foreach (var doc in client.Form01Attachments)
                     {
-                        FileName = doc.FileName,
-                        Url = doc.Url,
-                        Description = "Inherited from Client Registration (" + doc.FileName + ")"
-                    });
+                        if (doc != null && !Form01Attachments.Any(d => d.Url == doc.Url || d.FileName == doc.FileName))
+                        {
+                            Form01Attachments.Add(new SourceDocument
+                            {
+                                FileName = doc.FileName ?? string.Empty,
+                                Url = doc.Url ?? string.Empty,
+                                Description = "Inherited from Client Registration (" + (doc.FileName ?? "Document") + ")"
+                            });
+                        }
+                    }
+                }
+
+                if (client.ArticleOfAssociationAttachments != null)
+                {
+                    foreach (var doc in client.ArticleOfAssociationAttachments)
+                    {
+                        if (doc != null && !Form01Attachments.Any(d => d.Url == doc.Url || d.FileName == doc.FileName))
+                        {
+                            Form01Attachments.Add(new SourceDocument
+                            {
+                                FileName = doc.FileName ?? string.Empty,
+                                Url = doc.Url ?? string.Empty,
+                                Description = "Inherited Articles of Association (" + (doc.FileName ?? "Document") + ")"
+                            });
+                        }
+                    }
+                }
+
+                if (client.BrAttachments != null)
+                {
+                    foreach (var doc in client.BrAttachments)
+                    {
+                        if (doc != null && !BoFormAttachments.Any(d => d.Url == doc.Url || d.FileName == doc.FileName))
+                        {
+                            BoFormAttachments.Add(new SourceDocument
+                            {
+                                FileName = doc.FileName ?? string.Empty,
+                                Url = doc.Url ?? string.Empty,
+                                Description = "Inherited Business Registration (" + (doc.FileName ?? "Document") + ")"
+                            });
+                        }
+                    }
+                }
+
+                if (client.NicAttachments != null && client.NicAttachments.Count > 0 && string.IsNullOrEmpty(NicFileName))
+                {
+                    var firstNic = client.NicAttachments.FirstOrDefault(n => n != null);
+                    if (firstNic != null)
+                    {
+                        NicFileName = firstNic.Url ?? firstNic.FileName ?? string.Empty;
+                    }
                 }
             }
-        }
-
-        if (client.ArticleOfAssociationAttachments != null)
-        {
-            foreach (var doc in client.ArticleOfAssociationAttachments)
+            catch (Exception ex)
             {
-                if (!Form01Attachments.Any(d => d.Url == doc.Url || d.FileName == doc.FileName))
-                {
-                    Form01Attachments.Add(new SourceDocument
-                    {
-                        FileName = doc.FileName,
-                        Url = doc.Url,
-                        Description = "Inherited Articles of Association (" + doc.FileName + ")"
-                    });
-                }
+                Console.WriteLine($"[ERROR] Error in OnClientSelected: {ex.Message}");
             }
-        }
-
-        if (client.BrAttachments != null)
-        {
-            foreach (var doc in client.BrAttachments)
-            {
-                if (!BoFormAttachments.Any(d => d.Url == doc.Url || d.FileName == doc.FileName))
-                {
-                    BoFormAttachments.Add(new SourceDocument
-                    {
-                        FileName = doc.FileName,
-                        Url = doc.Url,
-                        Description = "Inherited Business Registration (" + doc.FileName + ")"
-                    });
-                }
-            }
-        }
-
-        if (client.NicAttachments != null && client.NicAttachments.Count > 0 && string.IsNullOrEmpty(NicFileName))
-        {
-            var firstNic = client.NicAttachments.FirstOrDefault();
-            if (firstNic != null)
-            {
-                NicFileName = firstNic.Url ?? firstNic.FileName;
-            }
-        }
+        });
     }
 
     public override void SelectClientCode(ClientRecord client)
