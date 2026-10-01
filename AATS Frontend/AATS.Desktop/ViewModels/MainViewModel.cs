@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Linq;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
@@ -78,6 +78,12 @@ public partial class MainViewModel : ViewModelBase
 
     [ObservableProperty] 
     [NotifyPropertyChangedFor(nameof(IsAdmin))]
+    [NotifyPropertyChangedFor(nameof(CanAccessAudit))]
+    [NotifyPropertyChangedFor(nameof(CanAccessTax))]
+    [NotifyPropertyChangedFor(nameof(CanAccessSecretarial))]
+    [NotifyPropertyChangedFor(nameof(IsAuditCategoryVisible))]
+    [NotifyPropertyChangedFor(nameof(IsTaxCategoryVisible))]
+    [NotifyPropertyChangedFor(nameof(IsSecretarialCategoryVisible))]
     private TeamMember _currentUser = null!;
     [ObservableProperty] private bool _isSignOutConfirmVisible;
     [ObservableProperty] private bool _isEditProfileVisible;
@@ -94,7 +100,34 @@ public partial class MainViewModel : ViewModelBase
     
     // Notifications
     [ObservableProperty] private int _notificationUnreadCount;
-    public bool IsAdmin => CurrentUser?.Role?.Trim().Equals("Admin", StringComparison.OrdinalIgnoreCase) ?? false;
+
+    public bool IsAdmin
+    {
+        get
+        {
+            if (string.IsNullOrWhiteSpace(CurrentUser?.Role)) return true;
+            var role = CurrentUser.Role.Trim();
+            return role.Equals("Admin", StringComparison.OrdinalIgnoreCase) ||
+                   role.Equals("All", StringComparison.OrdinalIgnoreCase) ||
+                   role.Equals("All Roles", StringComparison.OrdinalIgnoreCase);
+        }
+    }
+
+    public bool CanAccessAudit => IsAdmin ||
+        (!string.IsNullOrWhiteSpace(CurrentUser?.Role) &&
+         CurrentUser.Role.Contains("Audit", StringComparison.OrdinalIgnoreCase));
+
+    public bool CanAccessTax => IsAdmin ||
+        (!string.IsNullOrWhiteSpace(CurrentUser?.Role) &&
+         CurrentUser.Role.Contains("Tax", StringComparison.OrdinalIgnoreCase));
+
+    public bool CanAccessSecretarial => IsAdmin ||
+        (!string.IsNullOrWhiteSpace(CurrentUser?.Role) &&
+         CurrentUser.Role.Contains("Secretarial", StringComparison.OrdinalIgnoreCase));
+
+    public bool IsAuditCategoryVisible => CanAccessAudit;
+    public bool IsTaxCategoryVisible => CanAccessTax;
+    public bool IsSecretarialCategoryVisible => CanAccessSecretarial;
     public ObservableCollection<AppNotification> RecentNotifications => NotificationService.Instance.Notifications;
     
     // Global App Search

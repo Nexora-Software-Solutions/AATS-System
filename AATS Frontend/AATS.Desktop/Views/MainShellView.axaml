@@ -114,7 +114,7 @@
                         </Button>
 
                         <!-- Audit & Accounts -->
-                        <Expander Classes="sidebar-expander" IsExpanded="{Binding IsAccountsExpanded, Mode=TwoWay}">
+                        <Expander Classes="sidebar-expander" IsExpanded="{Binding IsAccountsExpanded, Mode=TwoWay}" IsVisible="{Binding IsAuditCategoryVisible}">
                             <Expander.Header>
                                 <StackPanel Orientation="Horizontal" Spacing="10">
                                     <i:Icon Value="fa-solid fa-file-invoice-dollar" Foreground="{DynamicResource AccentBlue}"/>
@@ -147,7 +147,7 @@
                         </Expander>
 
                         <!-- Tax Filing -->
-                        <Expander Name="TaxFilingExpander" Classes="sidebar-expander" IsExpanded="{Binding IsTaxFilingExpanded, Mode=TwoWay}">
+                        <Expander Name="TaxFilingExpander" Classes="sidebar-expander" IsExpanded="{Binding IsTaxFilingExpanded, Mode=TwoWay}" IsVisible="{Binding IsTaxCategoryVisible}">
                             <Expander.Header>
                                 <StackPanel Orientation="Horizontal" Spacing="10">
                                     <i:Icon Value="fa-solid fa-receipt" Foreground="{DynamicResource AccentBlue}"/>
@@ -177,7 +177,7 @@
                         </Expander>
 
                         <!-- Secretarial & Advisory -->
-                        <Expander Name="SecretarialExpander" Classes="sidebar-expander" IsExpanded="{Binding IsSecretarialExpanded, Mode=TwoWay}">
+                        <Expander Name="SecretarialExpander" Classes="sidebar-expander" IsExpanded="{Binding IsSecretarialExpanded, Mode=TwoWay}" IsVisible="{Binding IsSecretarialCategoryVisible}">
                             <Expander.Header>
                                 <StackPanel Orientation="Horizontal" Spacing="10">
                                     <i:Icon Value="fa-solid fa-briefcase" Foreground="{DynamicResource AccentBlue}"/>
